@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Celestial Calendar — Solar & Lunar Unified</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ─── NIGHT THEME (default) ─── */
+:root {
+  --bg-primary: linear-gradient(160deg, #0a0a1a 0%, #0f1629 30%, #0a0a1a 100%);
+  --bg-surface: rgba(15, 23, 42, 0.5);
+  --bg-surface-alt: rgba(15, 23, 42, 0.6);
+  --bg-input: rgba(30, 41, 59, 0.8);
+  --bg-btn: rgba(30, 41, 59, 0.6);
+  --bg-btn-hover: rgba(51, 65, 85, 0.8);
+  --bg-toggle: rgba(30, 41, 59, 0.5);
+  --bg-badge: rgba(30, 41, 59, 0.6);
+  --bg-result: rgba(251, 191, 36, 0.05);
+  --border-primary: #1e293b;
+  --border-secondary: #334155;
+  --border-result: rgba(251, 191, 36, 0.15);
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-footer: #475569;
+  --accent: #fbbf24;
+  --accent-bg: rgba(251, 191, 36, 0.15);
+  --accent-bg-subtle: rgba(251, 191, 36, 0.08);
+  --accent-glow: rgba(251, 191, 36, 0.2);
+  --accent-sys: rgba(251, 191, 36, 0.12);
+  --holiday-solar: #f43f5e;
+  --holiday-lunar: #fb923c;
+  --day-hover: rgba(51, 65, 85, 0.4);
+  --other-month-opacity: 0.3;
+  --moon-bg: #1a1a2e;
+  --moon-stroke: #334155;
+  --moon-lit: #fbbf24;
+  --info-border: rgba(30, 41, 59, 0.5);
+  --toggle-track: #334155;
+  --toggle-knob: #0f172a;
+}
+
+/* ─── DAY THEME ─── */
+[data-theme="day"] {
+  --bg-primary: linear-gradient(160deg, #f8fafc 0%, #eef2f7 30%, #f8fafc 100%);
+  --bg-surface: rgba(255, 255, 255, 0.75);
+  --bg-surface-alt: rgba(255, 255, 255, 0.85);
+  --bg-input: rgba(241, 245, 249, 0.9);
+  --bg-btn: rgba(241, 245, 249, 0.8);
+  --bg-btn-hover: rgba(226, 232, 240, 0.9);
+  --bg-toggle: rgba(241, 245, 249, 0.7);
+  --bg-badge: rgba(241, 245, 249, 0.8);
+  --bg-result: rgba(217, 119, 6, 0.06);
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  --border-result: rgba(217, 119, 6, 0.2);
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-footer: #94a3b8;
+  --accent: #d97706;
+  --accent-bg: rgba(217, 119, 6, 0.12);
+  --accent-bg-subtle: rgba(217, 119, 6, 0.06);
+  --accent-glow: rgba(217, 119, 6, 0.15);
+  --accent-sys: rgba(217, 119, 6, 0.1);
+  --holiday-solar: #e11d48;
+  --holiday-lunar: #ea580c;
+  --day-hover: rgba(226, 232, 240, 0.6);
+  --other-month-opacity: 0.35;
+  --moon-bg: #e2e8f0;
+  --moon-stroke: #cbd5e1;
+  --moon-lit: #d97706;
+  --info-border: rgba(226, 232, 240, 0.6);
+  --toggle-track: #cbd5e1;
+  --toggle-knob: #ffffff;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Crimson Pro', 'Noto Serif SC', Georgia, serif;
+  padding: 20px;
+  transition: background 0.5s, color 0.4s;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.container { max-width: 1300px; margin: 0 auto; }
+
+/* ─── HEADER ─── */
+.cal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0 24px; flex-wrap: wrap; gap: 12px;
+}
+.cal-title {
+  font-size: 28px; font-weight: 300; letter-spacing: 3px; text-transform: uppercase;
+  background: linear-gradient(90deg, #fbbf24, #f59e0b, #d97706);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.cal-subtitle {
+  font-size: 12px; color: var(--text-muted); letter-spacing: 2px; margin-top: 4px; text-transform: uppercase;
+}
+.cal-credit {
+  font-size: 11px; color: #ef4444; letter-spacing: 1.5px; margin-top: 6px;
+  font-style: italic; font-weight: 500;
+}
+.view-toggles { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+/* ─── THEME TOGGLE SWITCH ─── */
+.theme-switch {
+  position: relative; width: 60px; height: 30px;
+  border-radius: 15px; border: none; cursor: pointer; padding: 0;
+  background: var(--toggle-track);
+  transition: background 0.4s;
+  overflow: hidden;
+}
+.theme-switch-knob {
+  position: absolute; top: 3px; left: 3px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--toggle-knob);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s;
+  z-index: 2;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; line-height: 1;
+}
+[data-theme="day"] .theme-switch-knob { transform: translateX(30px); }
+.theme-switch-track {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; height: 100%; padding: 0 8px;
+  position: relative; z-index: 1;
+}
+.theme-switch-icon {
+  font-size: 13px; line-height: 1; transition: opacity 0.3s;
+}
+.theme-switch-icon.moon-icon { opacity: 1; }
+.theme-switch-icon.sun-icon { opacity: 0.35; }
+[data-theme="day"] .theme-switch-icon.moon-icon { opacity: 0.35; }
+[data-theme="day"] .theme-switch-icon.sun-icon { opacity: 1; }
+
+/* ─── BUTTONS ─── */
+.btn {
+  padding: 8px 16px; border: 1px solid var(--border-secondary);
+  background: var(--bg-btn); color: var(--text-primary);
+  border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 14px;
+  transition: all 0.2s; backdrop-filter: blur(8px);
+}
+.btn:hover { background: var(--bg-btn-hover); border-color: var(--accent); color: var(--accent); }
+.btn.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+.btn-nav {
+  width: 40px; height: 40px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; border-radius: 50%;
+}
+.btn-sm { font-size: 12px; padding: 6px 14px; text-transform: capitalize; }
+
+/* ─── SYSTEM TOGGLE ─── */
+.system-toggle { display: flex; gap: 4px; background: var(--bg-toggle); border-radius: 10px; padding: 3px; }
+.sys-tab {
+  padding: 5px 10px; border: none; background: transparent;
+  color: var(--text-muted); border-radius: 7px; cursor: pointer;
+  font-family: inherit; font-size: 11px; transition: all 0.2s;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.sys-tab.active { background: var(--accent-sys); color: var(--accent); }
+
+/* ─── MAIN LAYOUT ─── */
+.main-layout { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }
+@media (max-width: 960px) { .main-layout { grid-template-columns: 1fr; } }
+
+/* ─── CALENDAR GRID ─── */
+.calendar-grid {
+  background: var(--bg-surface); border: 1px solid var(--border-primary);
+  border-radius: 16px; padding: 20px; backdrop-filter: blur(12px);
+  transition: background 0.4s, border-color 0.4s;
+}
+.month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.month-label { font-size: 22px; font-weight: 500; min-width: 220px; text-align: center; letter-spacing: 1px; }
+.month-sub { font-size: 13px; color: var(--text-secondary); margin-top: 2px; font-family: 'Noto Serif SC', serif; }
+.weekday-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px; }
+.weekday-cell {
+  text-align: center; font-size: 12px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); padding: 8px 0;
+}
+.days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; animation: fadeSlideIn 0.3s ease; }
+.day-cell {
+  aspect-ratio: 1; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s; position: relative;
+  border: 1px solid transparent; min-height: 70px;
+}
+.day-cell:hover { background: var(--day-hover); border-color: var(--border-secondary); }
+.day-cell.other-month { opacity: var(--other-month-opacity); }
+.day-cell.today { border-color: var(--accent); background: var(--accent-bg-subtle); }
+.day-cell.selected { background: var(--accent-bg); border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+.day-cell.has-holiday::after {
+  content: ''; position: absolute; bottom: 4px;
+  width: 5px; height: 5px; border-radius: 50%; background: var(--holiday-solar);
+}
+.solar-day { font-size: 18px; font-weight: 500; line-height: 1.2; font-family: 'JetBrains Mono', monospace; }
+.lunar-day { font-size: 10px; color: var(--text-secondary); margin-top: 2px; font-family: 'Noto Serif SC', serif; }
+.holiday-tag {
+  font-size: 8px; color: var(--holiday-solar); margin-top: 1px;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 2px;
+}
+
+/* ─── SIDE PANEL ─── */
+.side-panel { display: flex; flex-direction: column; gap: 16px; }
+.panel-card {
+  background: var(--bg-surface-alt); border: 1px solid var(--border-primary);
+  border-radius: 16px; padding: 20px; backdrop-filter: blur(12px);
+  animation: fadeSlideIn 0.3s ease; transition: background 0.4s, border-color 0.4s;
+}
+.panel-title {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 3px;
+  color: var(--text-muted); margin-bottom: 12px; font-weight: 600;
+}
+.date-display { font-size: 36px; font-weight: 300; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+.lunar-display { font-size: 20px; color: var(--text-primary); margin-top: 4px; font-family: 'Noto Serif SC', serif; }
+.hijri-display { font-size: 14px; color: var(--text-secondary); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+.info-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--info-border); font-size: 14px;
+}
+.info-row:last-child { border-bottom: none; }
+.info-label { color: var(--text-muted); font-size: 12px; }
+.info-value { color: var(--text-primary); font-weight: 500; }
+.info-value.accent { color: var(--accent); }
+.moon-phase-container { display: flex; align-items: center; gap: 16px; }
+.zodiac-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+.zodiac-badge {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; background: var(--bg-badge); border: 1px solid var(--border-primary);
+  border-radius: 20px; font-size: 13px; transition: background 0.4s, border-color 0.4s;
+}
+.holiday-line { font-size: 14px; margin-bottom: 4px; }
+
+/* ─── CONVERTER ─── */
+.tab-group { display: flex; gap: 4px; background: var(--bg-toggle); border-radius: 10px; padding: 4px; margin-bottom: 12px; }
+.tab {
+  flex: 1; padding: 8px 12px; border: none; background: transparent;
+  color: var(--text-muted); border-radius: 8px; cursor: pointer;
+  font-family: inherit; font-size: 13px; transition: all 0.2s;
+}
+.tab.active { background: var(--accent-bg); color: var(--accent); }
+.input-group { display: flex; flex-direction: column; gap: 8px; }
+.input-row { display: flex; gap: 8px; align-items: center; }
+.input-field {
+  flex: 1; padding: 10px 12px; background: var(--bg-input);
+  border: 1px solid var(--border-secondary); border-radius: 8px;
+  color: var(--text-primary); font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; outline: none; transition: all 0.3s;
+}
+.input-field:focus { border-color: var(--accent); }
+.result-box {
+  padding: 12px; background: var(--bg-result);
+  border-radius: 8px; border: 1px solid var(--border-result); transition: all 0.4s;
+}
+.result-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.result-lunar { font-size: 16px; font-family: 'Noto Serif SC', serif; }
+.result-detail { font-size: 13px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; }
+.result-hijri { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.result-solar { font-size: 16px; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+.leap-label { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.leap-label input { accent-color: var(--accent); }
+.footer {
+  text-align: center; padding: 32px 0 16px; font-size: 11px;
+  color: var(--text-footer); letter-spacing: 2px; text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- HEADER -->
+  <div class="cal-header">
+    <div>
+      <div class="cal-title">Celestial Calendar</div>
+      <div class="cal-subtitle">SOLAR · LUNAR · UNIFIED</div>
+      <div class="cal-credit">Produced by D. Chan in 2026</div>
+    </div>
+    <div class="view-toggles">
+      <button class="theme-switch" id="themeToggle" title="Toggle Day / Night mode">
+        <span class="theme-switch-track">
+          <span class="theme-switch-icon moon-icon">🌙</span>
+          <span class="theme-switch-icon sun-icon">☀️</span>
+        </span>
+        <span class="theme-switch-knob"></span>
+      </button>
+      <div style="width:4px"></div>
+      <div class="system-toggle">
+        <button class="sys-tab active" data-system="chinese">Chinese</button>
+        <button class="sys-tab" data-system="hijri">Hijri</button>
+      </div>
+      <div style="width:1px"></div>
+      <button class="btn btn-sm active" data-view="combined">Combined</button>
+      <button class="btn btn-sm" data-view="solar">Solar</button>
+      <button class="btn btn-sm" data-view="lunar">Lunar</button>
+      <button class="btn btn-sm" id="todayBtn">Today</button>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <!-- CALENDAR GRID -->
+    <div class="calendar-grid">
+      <div class="month-nav">
+        <button class="btn btn-nav" id="prevMonth">&#8249;</button>
+        <div>
+          <div class="month-label" id="monthLabel"></div>
+          <div class="month-sub" id="monthSub"></div>
+        </div>
+        <button class="btn btn-nav" id="nextMonth">&#8250;</button>
+      </div>
+      <div class="weekday-row" id="weekdayRow"></div>
+      <div class="days-grid" id="daysGrid"></div>
+    </div>
+
+    <!-- SIDE PANEL -->
+    <div class="side-panel">
+      <div class="panel-card">
+        <div class="panel-title">Selected Date</div>
+        <div class="date-display" id="dateDisplay"></div>
+        <div class="lunar-display" id="lunarDisplay"></div>
+        <div class="hijri-display" id="hijriDisplay" style="display:none"></div>
+        <div id="holidayArea" style="margin-top:12px"></div>
+      </div>
+      <div class="panel-card">
+        <div class="panel-title">Moon Phase</div>
+        <div class="moon-phase-container">
+          <div id="moonSvg"></div>
+          <div>
+            <div id="moonName" style="font-size:16px;font-weight:500"></div>
+            <div id="moonIllum" style="font-size:12px;color:var(--text-muted);margin-top:2px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-card">
+        <div class="panel-title">Zodiac</div>
+        <div class="zodiac-badges" id="zodiacBadges"></div>
+      </div>
+      <div class="panel-card">
+        <div class="panel-title">Date Converter</div>
+        <div class="tab-group">
+          <button class="tab active" id="tabSolar">Solar → Lunar</button>
+          <button class="tab" id="tabLunar">Lunar → Solar</button>
+        </div>
+        <div id="converterSolar">
+          <div class="input-group">
+            <div class="input-row"><input type="date" class="input-field" id="solarInput"></div>
+            <div class="result-box" id="solarResult"></div>
+          </div>
+        </div>
+        <div id="converterLunar" style="display:none">
+          <div class="input-group">
+            <div class="input-row">
+              <input type="number" class="input-field" id="lYear" placeholder="Year" min="1900" max="2100" value="2026" style="flex:1">
+              <input type="number" class="input-field" id="lMonth" placeholder="Month" min="1" max="12" value="1" style="flex:0.7">
+              <input type="number" class="input-field" id="lDay" placeholder="Day" min="1" max="30" value="1" style="flex:0.7">
+            </div>
+            <div class="input-row">
+              <label class="leap-label"><input type="checkbox" id="lLeap"> Leap Month</label>
+              <button class="btn active" id="convertBtn" style="margin-left:auto">Convert →</button>
+            </div>
+            <div class="result-box" id="lunarResult"></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-card">
+        <div class="panel-title">Details</div>
+        <div id="detailsArea"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Celestial Calendar · Solar & Lunar Unified · 1900–2100</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// LUNAR DATA ENGINE
+// ═══════════════════════════════════════════════════════════════
+const LUNAR_DATA=[
+  0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
+  0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
+  0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
+  0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+  0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
+  0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,
+  0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
+  0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,
+  0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
+  0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x05ac0,0x0ab60,0x096d5,0x092e0,
+  0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
+  0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
+  0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
+  0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
+  0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,
+  0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06b20,0x1a6c4,0x0aae0,
+  0x092e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,
+  0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,
+  0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,
+  0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a4d0,0x0d150,0x0f252,
+  0x0d520
+];
+const HEAVENLY_STEMS=["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+const EARTHLY_BRANCHES=["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+const CHINESE_ZODIAC=["Rat","Ox","Tiger","Rabbit","Dragon","Snake","Horse","Goat","Monkey","Rooster","Dog","Pig"];
+const ZODIAC_EMOJI=["🐀","🐂","🐅","🐇","🐉","🐍","🐎","🐐","🐒","🐓","🐕","🐖"];
+const LUNAR_DAY_NAMES=["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十","十一","十二","十三","十四","十五","十六","十七","十八","十九","二十","廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
+const LUNAR_MONTH_NAMES=["正月","二月","三月","四月","五月","六月","七月","八月","九月","十月","冬月","腊月"];
+const MONTHS_EN=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DAYS_EN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const WESTERN_ZODIAC=[
+  {name:"Capricorn",symbol:"♑",start:[1,1],end:[1,19]},{name:"Aquarius",symbol:"♒",start:[1,20],end:[2,18]},
+  {name:"Pisces",symbol:"♓",start:[2,19],end:[3,20]},{name:"Aries",symbol:"♈",start:[3,21],end:[4,19]},
+  {name:"Taurus",symbol:"♉",start:[4,20],end:[5,20]},{name:"Gemini",symbol:"♊",start:[5,21],end:[6,20]},
+  {name:"Cancer",symbol:"♋",start:[6,21],end:[7,22]},{name:"Leo",symbol:"♌",start:[7,23],end:[8,22]},
+  {name:"Virgo",symbol:"♍",start:[8,23],end:[9,22]},{name:"Libra",symbol:"♎",start:[9,23],end:[10,22]},
+  {name:"Scorpio",symbol:"♏",start:[10,23],end:[11,21]},{name:"Sagittarius",symbol:"♐",start:[11,22],end:[12,21]},
+  {name:"Capricorn",symbol:"♑",start:[12,22],end:[12,31]}
+];
+
+function getLunarYearDays(y){let s=348;for(let i=0x8000;i>0x8;i>>=1)s+=(LUNAR_DATA[y-1900]&i)?1:0;return s+getLeapMonthDays(y)}
+function getLeapMonth(y){return LUNAR_DATA[y-1900]&0xf}
+function getLeapMonthDays(y){return getLeapMonth(y)?((LUNAR_DATA[y-1900]&0x10000)?30:29):0}
+function getLunarMonthDays(y,m){return(LUNAR_DATA[y-1900]&(0x10000>>m))?30:29}
+function solarToLunar(sy,sm,sd){
+  if(sy<1900||sy>2100)return null;
+  const base=new Date(1900,0,31),target=new Date(sy,sm-1,sd);
+  let off=Math.floor((target-base)/86400000);if(off<0)return null;
+  let ly=1900,yd;for(;ly<2101&&off>0;ly++){yd=getLunarYearDays(ly);off-=yd}
+  if(off<0){off+=yd;ly--}
+  const lm0=getLeapMonth(ly);let isLeap=false,lm=1,md;
+  for(;lm<14&&off>0;lm++){if(lm0>0&&lm===lm0+1&&!isLeap){--lm;isLeap=true;md=getLeapMonthDays(ly)}else{md=getLunarMonthDays(ly,lm)}if(isLeap&&lm===lm0+1)isLeap=false;off-=md}
+  if(off<0){off+=md;lm--}
+  if(off===0&&lm0>0&&lm===lm0+1){if(isLeap)isLeap=false;else{isLeap=true;--lm}}
+  return{year:ly,month:lm,day:off+1,isLeap};
+}
+function lunarToSolar(ly,lm,ld,isLeap=false){
+  if(ly<1900||ly>2100)return null;let off=0;
+  for(let y=1900;y<ly;y++)off+=getLunarYearDays(y);
+  const lm0=getLeapMonth(ly);let leap=false;
+  for(let m=1;m<lm;m++){if(!leap&&lm0>0&&m===lm0){leap=true;off+=getLeapMonthDays(ly);--m;continue}off+=getLunarMonthDays(ly,m);if(leap)leap=false}
+  if(isLeap&&lm0===lm)off+=getLunarMonthDays(ly,lm);off+=ld-1;
+  const base=new Date(1900,0,31),r=new Date(base.getTime()+off*86400000);
+  return{year:r.getFullYear(),month:r.getMonth()+1,day:r.getDate()};
+}
+function getStemBranch(y){const si=(y-4)%10,bi=(y-4)%12;return HEAVENLY_STEMS[si<0?si+10:si]+EARTHLY_BRANCHES[bi<0?bi+12:bi]}
+function getChineseZodiac(y){const i=(y-4)%12;const idx=i<0?i+12:i;return{name:CHINESE_ZODIAC[idx],emoji:ZODIAC_EMOJI[idx]}}
+function getWesternZodiac(m,d){for(const z of WESTERN_ZODIAC){if((m>z.start[0]||(m===z.start[0]&&d>=z.start[1]))&&(m<z.end[0]||(m===z.end[0]&&d<=z.end[1])))return z}return WESTERN_ZODIAC[0]}
+function getMoonPhase(y,m,d){const dt=new Date(y,m-1,d),kn=new Date(2000,0,6,18,14),diff=(dt-kn)/86400000,cyc=29.53058770576;return(((diff%cyc)+cyc)%cyc)/cyc}
+function getMoonPhaseName(p){
+  if(p<0.0625)return{name:"New Moon",icon:"🌑"};if(p<0.1875)return{name:"Waxing Crescent",icon:"🌒"};
+  if(p<0.3125)return{name:"First Quarter",icon:"🌓"};if(p<0.4375)return{name:"Waxing Gibbous",icon:"🌔"};
+  if(p<0.5625)return{name:"Full Moon",icon:"🌕"};if(p<0.6875)return{name:"Waning Gibbous",icon:"🌖"};
+  if(p<0.8125)return{name:"Last Quarter",icon:"🌗"};if(p<0.9375)return{name:"Waning Crescent",icon:"🌘"};
+  return{name:"New Moon",icon:"🌑"};
+}
+function gregorianToJD(y,m,d){if(m<=2){y--;m+=12}const A=Math.floor(y/100),B=2-A+Math.floor(A/4);return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+B-1524.5}
+function solarToHijri(y,m,d){const jd=gregorianToJD(y,m,d),l=Math.floor(jd)-1948440+10632,n=Math.floor((l-1)/10631),l2=l-10631*n+354,j=Math.floor((10985-l2)/5316)*Math.floor((50*l2)/17719)+Math.floor(l2/5670)*Math.floor((43*l2)/15238),l3=l2-Math.floor((30-j)/15)*Math.floor((17719*j)/50)-Math.floor(j/16)*Math.floor((15238*j)/43)+29,hm=Math.floor((24*l3)/709),hd=l3-Math.floor((709*hm)/24),hy=30*n+j-30;return{year:hy,month:hm,day:hd}}
+function getSolarHolidays(m,d){const h={"1-1":"New Year's Day","2-14":"Valentine's Day","3-8":"International Women's Day","4-1":"April Fools'","4-22":"Earth Day","5-1":"Labour Day","6-1":"Children's Day","10-1":"National Day (CN)","10-31":"Halloween","12-25":"Christmas","12-31":"New Year's Eve"};return h[m+"-"+d]||null}
+function getLunarHolidays(m,d,isLeap){if(isLeap)return null;const h={"1-1":"Spring Festival 🧧","1-15":"Lantern Festival 🏮","2-2":"Dragon Head Raising","3-3":"Shangsi Festival","5-5":"Dragon Boat Festival 🐲","7-7":"Qixi Festival 💕","7-15":"Ghost Festival 👻","8-15":"Mid-Autumn Festival 🥮","9-9":"Double Ninth Festival","12-8":"Laba Festival","12-23":"Little New Year","12-30":"Lunar New Year's Eve 🎆","12-29":"Lunar New Year's Eve 🎆"};return h[m+"-"+d]||null}
+function pad(n){return String(n).padStart(2,"0")}
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+const today=new Date();
+let state={
+  viewYear:today.getFullYear(),viewMonth:today.getMonth()+1,
+  selYear:today.getFullYear(),selMonth:today.getMonth()+1,selDay:today.getDate(),
+  viewMode:"combined",calSystem:"chinese",inputMode:"solar",theme:"night"
+};
+const $=id=>document.getElementById(id);
+
+// ═══════════════════════════════════════════════════════════════
+// THEME TOGGLE
+// ═══════════════════════════════════════════════════════════════
+$("themeToggle").onclick=()=>{
+  state.theme=state.theme==="night"?"day":"night";
+  if(state.theme==="day") document.documentElement.setAttribute("data-theme","day");
+  else document.documentElement.removeAttribute("data-theme");
+  render();
+};
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════
+function render(){renderMonthLabel();renderGrid();renderSidePanel();renderConverter()}
+
+function renderMonthLabel(){
+  $("monthLabel").textContent=MONTHS_EN[state.viewMonth-1]+" "+state.viewYear;
+  const lunar=solarToLunar(state.selYear,state.selMonth,state.selDay);
+  const hijri=solarToHijri(state.selYear,state.selMonth,state.selDay);
+  if(lunar&&state.calSystem==="chinese")$("monthSub").textContent=getStemBranch(lunar.year)+"年 · "+CHINESE_ZODIAC[(lunar.year-4)%12]+"年";
+  else if(hijri&&state.calSystem==="hijri")$("monthSub").textContent="Hijri "+hijri.year;
+  else $("monthSub").textContent="";
+}
+
+function renderGrid(){
+  $("weekdayRow").innerHTML=DAYS_EN.map(d=>`<div class="weekday-cell">${d}</div>`).join("");
+  const firstDay=new Date(state.viewYear,state.viewMonth-1,1).getDay();
+  const dim=new Date(state.viewYear,state.viewMonth,0).getDate();
+  const dimPrev=new Date(state.viewYear,state.viewMonth-1,0).getDate();
+  const days=[];
+  for(let i=firstDay-1;i>=0;i--){const d=dimPrev-i,m=state.viewMonth===1?12:state.viewMonth-1,y=state.viewMonth===1?state.viewYear-1:state.viewYear;days.push({day:d,month:m,year:y,cur:false,lunar:solarToLunar(y,m,d)})}
+  for(let d=1;d<=dim;d++)days.push({day:d,month:state.viewMonth,year:state.viewYear,cur:true,lunar:solarToLunar(state.viewYear,state.viewMonth,d)});
+  const rem=42-days.length;for(let d=1;d<=rem;d++){const m=state.viewMonth===12?1:state.viewMonth+1,y=state.viewMonth===12?state.viewYear+1:state.viewYear;days.push({day:d,month:m,year:y,cur:false,lunar:solarToLunar(y,m,d)})}
+  const t=new Date(),grid=$("daysGrid");
+  grid.innerHTML=days.map((d,i)=>{
+    const isToday=d.day===t.getDate()&&d.month===t.getMonth()+1&&d.year===t.getFullYear();
+    const isSel=d.day===state.selDay&&d.month===state.selMonth&&d.year===state.selYear;
+    const sh=getSolarHolidays(d.month,d.day),lh=d.lunar?getLunarHolidays(d.lunar.month,d.lunar.day,d.lunar.isLeap):null,hasH=sh||lh;
+    const hijri=state.calSystem==="hijri"?solarToHijri(d.year,d.month,d.day):null;
+    let cls="day-cell";if(!d.cur)cls+=" other-month";if(isToday)cls+=" today";if(isSel)cls+=" selected";if(hasH)cls+=" has-holiday";
+    let inner="";
+    if(state.viewMode==="solar"||state.viewMode==="combined")inner+=`<span class="solar-day">${d.day}</span>`;
+    if(state.viewMode==="lunar"&&d.lunar){if(state.calSystem==="chinese")inner+=`<span class="solar-day" style="font-size:14px;font-family:'Noto Serif SC',serif">${LUNAR_DAY_NAMES[d.lunar.day-1]}</span>`;else if(hijri)inner+=`<span class="solar-day" style="font-size:14px">${hijri.day}</span>`}
+    if(state.viewMode==="combined"&&d.lunar){if(state.calSystem==="chinese"){const lt=d.lunar.day===1?LUNAR_MONTH_NAMES[d.lunar.month-1]:LUNAR_DAY_NAMES[d.lunar.day-1];inner+=`<span class="lunar-day">${lt}</span>`}else if(hijri)inner+=`<span class="lunar-day">${hijri.day}</span>`}
+    if(hasH){const htxt=(lh||sh||"").replace(/[🧧🏮🐲💕👻🥮🎆]/g,"").trim().substring(0,10);inner+=`<span class="holiday-tag">${htxt}</span>`}
+    return `<div class="${cls}" data-y="${d.year}" data-m="${d.month}" data-d="${d.day}" data-cur="${d.cur}" style="animation-delay:${(i%7)*15}ms">${inner}</div>`;
+  }).join("");
+  grid.style.animation="none";grid.offsetHeight;grid.style.animation="";
+}
+
+function renderSidePanel(){
+  const sel={year:state.selYear,month:state.selMonth,day:state.selDay};
+  const lunar=solarToLunar(sel.year,sel.month,sel.day),hijri=solarToHijri(sel.year,sel.month,sel.day);
+  const phase=getMoonPhase(sel.year,sel.month,sel.day),moon=getMoonPhaseName(phase);
+  const wz=getWesternZodiac(sel.month,sel.day),cz=lunar?getChineseZodiac(lunar.year):null,sb=lunar?getStemBranch(lunar.year):"";
+  $("dateDisplay").textContent=sel.year+"."+pad(sel.month)+"."+pad(sel.day);
+  if(lunar&&state.calSystem==="chinese"){$("lunarDisplay").style.display="";$("lunarDisplay").textContent=(lunar.isLeap?"闰":"")+LUNAR_MONTH_NAMES[lunar.month-1]+" "+LUNAR_DAY_NAMES[lunar.day-1];$("hijriDisplay").style.display="none"}
+  else if(hijri&&state.calSystem==="hijri"){$("lunarDisplay").style.display="none";$("hijriDisplay").style.display="";$("hijriDisplay").textContent="Hijri: "+hijri.day+"/"+hijri.month+"/"+hijri.year}
+  const sh=getSolarHolidays(sel.month,sel.day),lh=lunar?getLunarHolidays(lunar.month,lunar.day,lunar.isLeap):null;
+  let hhtml="";if(sh)hhtml+=`<div class="holiday-line" style="color:var(--holiday-solar)">★ ${sh}</div>`;if(lh)hhtml+=`<div class="holiday-line" style="color:var(--holiday-lunar)">★ ${lh}</div>`;
+  $("holidayArea").innerHTML=hhtml;
+  // Moon
+  const size=56,r=size/2-2,cx=size/2,cy=size/2;
+  const cs=getComputedStyle(document.documentElement);
+  let dp;if(phase<=0.5){const sw=Math.cos(phase*2*Math.PI);dp=`M ${cx} ${cy-r} A ${r} ${r} 0 0 1 ${cx} ${cy+r} A ${r*Math.abs(sw)} ${r} 0 0 ${sw>=0?1:0} ${cx} ${cy-r}`}else{const sw=Math.cos(phase*2*Math.PI);dp=`M ${cx} ${cy-r} A ${r} ${r} 0 0 0 ${cx} ${cy+r} A ${r*Math.abs(sw)} ${r} 0 0 ${sw>=0?0:1} ${cx} ${cy-r}`}
+  $("moonSvg").innerHTML=`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${cx}" cy="${cy}" r="${r}" fill="${cs.getPropertyValue('--moon-bg').trim()}" stroke="${cs.getPropertyValue('--moon-stroke').trim()}" stroke-width="1"/><path d="${dp}" fill="${cs.getPropertyValue('--moon-lit').trim()}"/></svg>`;
+  $("moonName").textContent=moon.icon+" "+moon.name;
+  $("moonIllum").textContent="Illumination: "+Math.round((1-Math.abs(phase*2-1))*100)+"%";
+  let zbhtml="";if(cz)zbhtml+=`<div class="zodiac-badge"><span style="font-size:18px">${cz.emoji}</span><span>${cz.name}</span>${sb?`<span style="font-family:'Noto Serif SC',serif;color:var(--text-secondary)">${sb}</span>`:""}</div>`;
+  zbhtml+=`<div class="zodiac-badge"><span style="font-size:18px">${wz.symbol}</span><span>${wz.name}</span></div>`;
+  $("zodiacBadges").innerHTML=zbhtml;
+  const doy=Math.ceil((new Date(sel.year,sel.month-1,sel.day)-new Date(sel.year,0,0))/86400000);
+  const wn=Math.ceil(((new Date(sel.year,sel.month-1,sel.day)-new Date(sel.year,0,1))/86400000+new Date(sel.year,0,1).getDay()+1)/7);
+  const jd=Math.floor(gregorianToJD(sel.year,sel.month,sel.day));
+  const isLY=sel.year%4===0&&(sel.year%100!==0||sel.year%400===0);
+  let dhtml=`<div class="info-row"><span class="info-label">Day of Year</span><span class="info-value">${doy}</span></div><div class="info-row"><span class="info-label">Week Number</span><span class="info-value">${wn}</span></div><div class="info-row"><span class="info-label">Julian Day</span><span class="info-value accent" style="font-family:'JetBrains Mono',monospace;font-size:13px">${jd}</span></div>`;
+  if(lunar){dhtml+=`<div class="info-row"><span class="info-label">Lunar Month Days</span><span class="info-value">${getLunarMonthDays(lunar.year,lunar.month)}</span></div><div class="info-row"><span class="info-label">Leap Month</span><span class="info-value">${getLeapMonth(lunar.year)||"None"}</span></div>`}
+  dhtml+=`<div class="info-row"><span class="info-label">Solar Leap Year</span><span class="info-value">${isLY?"Yes":"No"}</span></div>`;
+  $("detailsArea").innerHTML=dhtml;
+}
+
+function renderConverter(){
+  if(state.inputMode==="solar"){
+    $("converterSolar").style.display="";$("converterLunar").style.display="none";
+    $("tabSolar").classList.add("active");$("tabLunar").classList.remove("active");
+    $("solarInput").value=state.selYear+"-"+pad(state.selMonth)+"-"+pad(state.selDay);
+    const lunar=solarToLunar(state.selYear,state.selMonth,state.selDay),hijri=solarToHijri(state.selYear,state.selMonth,state.selDay);
+    if(lunar)$("solarResult").innerHTML=`<div class="result-label">Lunar Result</div><div class="result-lunar">${lunar.isLeap?"闰":""}${LUNAR_MONTH_NAMES[lunar.month-1]} ${LUNAR_DAY_NAMES[lunar.day-1]}</div><div class="result-detail">Year ${lunar.year}, Month ${lunar.month}${lunar.isLeap?" (Leap)":""}, Day ${lunar.day}</div>${hijri?`<div class="result-hijri">Hijri: ${hijri.day}/${hijri.month}/${hijri.year}</div>`:""}`;
+  }else{
+    $("converterSolar").style.display="none";$("converterLunar").style.display="";
+    $("tabSolar").classList.remove("active");$("tabLunar").classList.add("active");
+    $("lunarResult").innerHTML=`<div class="result-label">Solar Result</div><div class="result-solar">${state.selYear}-${pad(state.selMonth)}-${pad(state.selDay)}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EVENTS
+// ═══════════════════════════════════════════════════════════════
+$("prevMonth").onclick=()=>{if(state.viewMonth===1){state.viewYear--;state.viewMonth=12}else state.viewMonth--;render()};
+$("nextMonth").onclick=()=>{if(state.viewMonth===12){state.viewYear++;state.viewMonth=1}else state.viewMonth++;render()};
+$("todayBtn").onclick=()=>{const t=new Date();state.viewYear=t.getFullYear();state.viewMonth=t.getMonth()+1;state.selYear=t.getFullYear();state.selMonth=t.getMonth()+1;state.selDay=t.getDate();render()};
+$("daysGrid").addEventListener("click",e=>{const cell=e.target.closest(".day-cell");if(!cell)return;state.selYear=+cell.dataset.y;state.selMonth=+cell.dataset.m;state.selDay=+cell.dataset.d;if(cell.dataset.cur==="false"){state.viewYear=+cell.dataset.y;state.viewMonth=+cell.dataset.m}render()});
+document.querySelectorAll("[data-view]").forEach(btn=>{btn.onclick=()=>{state.viewMode=btn.dataset.view;document.querySelectorAll("[data-view]").forEach(b=>b.classList.remove("active"));btn.classList.add("active");render()}});
+document.querySelectorAll("[data-system]").forEach(btn=>{btn.onclick=()=>{state.calSystem=btn.dataset.system;document.querySelectorAll("[data-system]").forEach(b=>b.classList.remove("active"));btn.classList.add("active");render()}});
+$("tabSolar").onclick=()=>{state.inputMode="solar";renderConverter()};
+$("tabLunar").onclick=()=>{state.inputMode="lunar";renderConverter()};
+$("solarInput").addEventListener("change",e=>{const p=e.target.value.split("-").map(Number);if(p[0]&&p[1]&&p[2]){state.selYear=p[0];state.selMonth=p[1];state.selDay=p[2];state.viewYear=p[0];state.viewMonth=p[1];render()}});
+$("convertBtn").onclick=()=>{const ly=+$("lYear").value,lm=+$("lMonth").value,ld=+$("lDay").value,ll=$("lLeap").checked;const r=lunarToSolar(ly,lm,ld,ll);if(r){state.selYear=r.year;state.selMonth=r.month;state.selDay=r.day;state.viewYear=r.year;state.viewMonth=r.month;render()}};
+
+// INIT
+render();
+</script>
+</body>
+</html>
