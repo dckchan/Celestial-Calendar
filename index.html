@@ -175,7 +175,7 @@ body {
 }
 .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .month-label { font-size: 22px; font-weight: 500; min-width: 220px; text-align: center; letter-spacing: 1px; }
-.month-sub { font-size: 13px; color: var(--text-secondary); margin-top: 2px; font-family: 'Noto Serif SC', serif; }
+.month-sub { font-size: 13px; color: var(--date-color); margin-top: 2px; font-family: 'Noto Serif SC', serif; }
 .weekday-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px; }
 .weekday-cell {
   text-align: center; font-size: 12px; font-weight: 600;
@@ -197,7 +197,7 @@ body {
   width: 5px; height: 5px; border-radius: 50%; background: var(--holiday-solar);
 }
 .solar-day { font-size: 18px; font-weight: 500; line-height: 1.2; font-family: 'JetBrains Mono', monospace; color: var(--date-color); }
-.lunar-day { font-size: 10px; color: var(--text-secondary); margin-top: 2px; font-family: 'Noto Serif SC', serif; }
+.lunar-day { font-size: 10px; color: var(--date-color); margin-top: 2px; font-family: 'Noto Serif SC', serif; }
 .holiday-tag {
   font-size: 8px; color: var(--holiday-solar); margin-top: 1px;
   max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 2px;
@@ -215,7 +215,7 @@ body {
   color: var(--text-muted); margin-bottom: 12px; font-weight: 600;
 }
 .date-display { font-size: 36px; font-weight: 300; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
-.lunar-display { font-size: 20px; color: var(--text-primary); margin-top: 4px; font-family: 'Noto Serif SC', serif; }
+.lunar-display { font-size: 20px; color: var(--date-color); margin-top: 4px; font-family: 'Noto Serif SC', serif; }
 .info-row {
   display: flex; justify-content: space-between; align-items: center;
   padding: 8px 0; border-bottom: 1px solid var(--info-border); font-size: 14px;
@@ -255,8 +255,8 @@ body {
   border-radius: 8px; border: 1px solid var(--border-result); transition: all 0.4s;
 }
 .result-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
-.result-lunar { font-size: 16px; font-family: 'Noto Serif SC', serif; }
-.result-detail { font-size: 13px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; }
+.result-lunar { font-size: 16px; font-family: 'Noto Serif SC', serif; color: var(--date-color); }
+.result-detail { font-size: 13px; color: var(--date-color); font-family: 'JetBrains Mono', monospace; }
 .result-solar { font-size: 16px; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
 .leap-label { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .leap-label input { accent-color: var(--accent); }
@@ -528,7 +528,7 @@ function renderSidePanel(){
   $("moonSvg").innerHTML=`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${cx}" cy="${cy}" r="${r}" fill="${cs.getPropertyValue('--moon-bg').trim()}" stroke="${cs.getPropertyValue('--moon-stroke').trim()}" stroke-width="1"/><path d="${dp}" fill="${cs.getPropertyValue('--moon-lit').trim()}"/></svg>`;
   $("moonName").textContent=moon.icon+" "+moon.name;
   $("moonIllum").textContent="Illumination: "+Math.round((1-Math.abs(phase*2-1))*100)+"%";
-  let zbhtml="";if(cz)zbhtml+=`<div class="zodiac-badge"><span style="font-size:18px">${cz.emoji}</span><span>${cz.name}</span>${sb?`<span style="font-family:'Noto Serif SC',serif;color:var(--text-secondary)">${sb}</span>`:""}</div>`;
+  let zbhtml="";if(cz)zbhtml+=`<div class="zodiac-badge"><span style="font-size:18px">${cz.emoji}</span><span>${cz.name}</span>${sb?`<span style="font-family:'Noto Serif SC',serif;color:var(--date-color)">${sb}</span>`:""}</div>`;
   zbhtml+=`<div class="zodiac-badge"><span style="font-size:18px">${wz.symbol}</span><span>${wz.name}</span></div>`;
   $("zodiacBadges").innerHTML=zbhtml;
   const doy=Math.ceil((Date.UTC(sel.year,sel.month-1,sel.day)-Date.UTC(sel.year,0,0))/86400000);
