@@ -161,16 +161,6 @@ body {
 }
 .btn-sm { font-size: 12px; padding: 6px 14px; text-transform: capitalize; }
 
-/* ─── SYSTEM TOGGLE ─── */
-.system-toggle { display: flex; gap: 4px; background: var(--bg-toggle); border-radius: 10px; padding: 3px; }
-.sys-tab {
-  padding: 5px 10px; border: none; background: transparent;
-  color: var(--text-muted); border-radius: 7px; cursor: pointer;
-  font-family: inherit; font-size: 11px; transition: all 0.2s;
-  text-transform: uppercase; letter-spacing: 1px;
-}
-.sys-tab.active { background: var(--accent-sys); color: var(--accent); }
-
 /* ─── MAIN LAYOUT ─── */
 .main-layout { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }
 @media (max-width: 960px) { .main-layout { grid-template-columns: 1fr; } }
@@ -224,7 +214,6 @@ body {
 }
 .date-display { font-size: 36px; font-weight: 300; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
 .lunar-display { font-size: 20px; color: var(--text-primary); margin-top: 4px; font-family: 'Noto Serif SC', serif; }
-.hijri-display { font-size: 14px; color: var(--text-secondary); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
 .info-row {
   display: flex; justify-content: space-between; align-items: center;
   padding: 8px 0; border-bottom: 1px solid var(--info-border); font-size: 14px;
@@ -266,7 +255,6 @@ body {
 .result-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
 .result-lunar { font-size: 16px; font-family: 'Noto Serif SC', serif; }
 .result-detail { font-size: 13px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; }
-.result-hijri { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
 .result-solar { font-size: 16px; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
 .leap-label { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .leap-label input { accent-color: var(--accent); }
@@ -295,11 +283,6 @@ body {
         <span class="theme-switch-knob"></span>
       </button>
       <div style="width:4px"></div>
-      <div class="system-toggle">
-        <button class="sys-tab active" data-system="chinese">Chinese</button>
-        <button class="sys-tab" data-system="hijri">Hijri</button>
-      </div>
-      <div style="width:1px"></div>
       <button class="btn btn-sm active" data-view="combined">Combined</button>
       <button class="btn btn-sm" data-view="solar">Solar</button>
       <button class="btn btn-sm" data-view="lunar">Lunar</button>
@@ -328,7 +311,6 @@ body {
         <div class="panel-title">Selected Date</div>
         <div class="date-display" id="dateDisplay"></div>
         <div class="lunar-display" id="lunarDisplay"></div>
-        <div class="hijri-display" id="hijriDisplay" style="display:none"></div>
         <div id="holidayArea" style="margin-top:12px"></div>
       </div>
       <div class="panel-card">
@@ -464,7 +446,6 @@ function getMoonPhaseName(p){
   return{name:"New Moon",icon:"🌑"};
 }
 function gregorianToJD(y,m,d){if(m<=2){y--;m+=12}const A=Math.floor(y/100),B=2-A+Math.floor(A/4);return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+B-1524.5}
-function solarToHijri(y,m,d){const jd=gregorianToJD(y,m,d),l=Math.floor(jd)-1948440+10632,n=Math.floor((l-1)/10631),l2=l-10631*n+354,j=Math.floor((10985-l2)/5316)*Math.floor((50*l2)/17719)+Math.floor(l2/5670)*Math.floor((43*l2)/15238),l3=l2-Math.floor((30-j)/15)*Math.floor((17719*j)/50)-Math.floor(j/16)*Math.floor((15238*j)/43)+29,hm=Math.floor((24*l3)/709),hd=l3-Math.floor((709*hm)/24),hy=30*n+j-30;return{year:hy,month:hm,day:hd}}
 function getSolarHolidays(m,d){const h={"1-1":"New Year's Day","2-14":"Valentine's Day","3-8":"International Women's Day","4-1":"April Fools'","4-22":"Earth Day","5-1":"Labour Day","6-1":"Children's Day","10-1":"National Day (CN)","10-31":"Halloween","12-25":"Christmas","12-31":"New Year's Eve"};return h[m+"-"+d]||null}
 function getLunarHolidays(m,d,isLeap){if(isLeap)return null;const h={"1-1":"Spring Festival 🧧","1-15":"Lantern Festival 🏮","2-2":"Dragon Head Raising","3-3":"Shangsi Festival","5-5":"Dragon Boat Festival 🐲","7-7":"Qixi Festival 💕","7-15":"Ghost Festival 👻","8-15":"Mid-Autumn Festival 🥮","9-9":"Double Ninth Festival","12-8":"Laba Festival","12-23":"Little New Year","12-30":"Lunar New Year's Eve 🎆","12-29":"Lunar New Year's Eve 🎆"};return h[m+"-"+d]||null}
 function pad(n){return String(n).padStart(2,"0")}
@@ -476,7 +457,7 @@ const today=new Date();
 let state={
   viewYear:today.getFullYear(),viewMonth:today.getMonth()+1,
   selYear:today.getFullYear(),selMonth:today.getMonth()+1,selDay:today.getDate(),
-  viewMode:"combined",calSystem:"chinese",inputMode:"solar",theme:"night"
+  viewMode:"combined",inputMode:"solar",theme:"night"
 };
 const $=id=>document.getElementById(id);
 
@@ -498,9 +479,7 @@ function render(){renderMonthLabel();renderGrid();renderSidePanel();renderConver
 function renderMonthLabel(){
   $("monthLabel").textContent=MONTHS_EN[state.viewMonth-1]+" "+state.viewYear;
   const lunar=solarToLunar(state.selYear,state.selMonth,state.selDay);
-  const hijri=solarToHijri(state.selYear,state.selMonth,state.selDay);
-  if(lunar&&state.calSystem==="chinese")$("monthSub").textContent=getStemBranch(lunar.year)+"年 · "+CHINESE_ZODIAC[(lunar.year-4)%12]+"年";
-  else if(hijri&&state.calSystem==="hijri")$("monthSub").textContent="Hijri "+hijri.year;
+  if(lunar)$("monthSub").textContent=getStemBranch(lunar.year)+"年 · "+CHINESE_ZODIAC[(lunar.year-4)%12]+"年";
   else $("monthSub").textContent="";
 }
 
@@ -518,12 +497,11 @@ function renderGrid(){
     const isToday=d.day===t.getDate()&&d.month===t.getMonth()+1&&d.year===t.getFullYear();
     const isSel=d.day===state.selDay&&d.month===state.selMonth&&d.year===state.selYear;
     const sh=getSolarHolidays(d.month,d.day),lh=d.lunar?getLunarHolidays(d.lunar.month,d.lunar.day,d.lunar.isLeap):null,hasH=sh||lh;
-    const hijri=state.calSystem==="hijri"?solarToHijri(d.year,d.month,d.day):null;
     let cls="day-cell";if(!d.cur)cls+=" other-month";if(isToday)cls+=" today";if(isSel)cls+=" selected";if(hasH)cls+=" has-holiday";
     let inner="";
     if(state.viewMode==="solar"||state.viewMode==="combined")inner+=`<span class="solar-day">${d.day}</span>`;
-    if(state.viewMode==="lunar"&&d.lunar){if(state.calSystem==="chinese")inner+=`<span class="solar-day" style="font-size:14px;font-family:'Noto Serif SC',serif">${LUNAR_DAY_NAMES[d.lunar.day-1]}</span>`;else if(hijri)inner+=`<span class="solar-day" style="font-size:14px">${hijri.day}</span>`}
-    if(state.viewMode==="combined"&&d.lunar){if(state.calSystem==="chinese"){const lt=d.lunar.day===1?LUNAR_MONTH_NAMES[d.lunar.month-1]:LUNAR_DAY_NAMES[d.lunar.day-1];inner+=`<span class="lunar-day">${lt}</span>`}else if(hijri)inner+=`<span class="lunar-day">${hijri.day}</span>`}
+    if(state.viewMode==="lunar"&&d.lunar){inner+=`<span class="solar-day" style="font-size:14px;font-family:'Noto Serif SC',serif">${LUNAR_DAY_NAMES[d.lunar.day-1]}</span>`}
+    if(state.viewMode==="combined"&&d.lunar){const lt=d.lunar.day===1?LUNAR_MONTH_NAMES[d.lunar.month-1]:LUNAR_DAY_NAMES[d.lunar.day-1];inner+=`<span class="lunar-day">${lt}</span>`}
     if(hasH){const htxt=(lh||sh||"").replace(/[🧧🏮🐲💕👻🥮🎆]/g,"").trim().substring(0,10);inner+=`<span class="holiday-tag">${htxt}</span>`}
     return `<div class="${cls}" data-y="${d.year}" data-m="${d.month}" data-d="${d.day}" data-cur="${d.cur}" style="animation-delay:${(i%7)*15}ms">${inner}</div>`;
   }).join("");
@@ -532,12 +510,12 @@ function renderGrid(){
 
 function renderSidePanel(){
   const sel={year:state.selYear,month:state.selMonth,day:state.selDay};
-  const lunar=solarToLunar(sel.year,sel.month,sel.day),hijri=solarToHijri(sel.year,sel.month,sel.day);
+  const lunar=solarToLunar(sel.year,sel.month,sel.day);
   const phase=getMoonPhase(sel.year,sel.month,sel.day),moon=getMoonPhaseName(phase);
   const wz=getWesternZodiac(sel.month,sel.day),cz=lunar?getChineseZodiac(lunar.year):null,sb=lunar?getStemBranch(lunar.year):"";
   $("dateDisplay").textContent=sel.year+"."+pad(sel.month)+"."+pad(sel.day);
-  if(lunar&&state.calSystem==="chinese"){$("lunarDisplay").style.display="";$("lunarDisplay").textContent=(lunar.isLeap?"闰":"")+LUNAR_MONTH_NAMES[lunar.month-1]+" "+LUNAR_DAY_NAMES[lunar.day-1];$("hijriDisplay").style.display="none"}
-  else if(hijri&&state.calSystem==="hijri"){$("lunarDisplay").style.display="none";$("hijriDisplay").style.display="";$("hijriDisplay").textContent="Hijri: "+hijri.day+"/"+hijri.month+"/"+hijri.year}
+  if(lunar){$("lunarDisplay").style.display="";$("lunarDisplay").textContent=(lunar.isLeap?"闰":"")+LUNAR_MONTH_NAMES[lunar.month-1]+" "+LUNAR_DAY_NAMES[lunar.day-1]}
+  else{$("lunarDisplay").style.display="none"}
   const sh=getSolarHolidays(sel.month,sel.day),lh=lunar?getLunarHolidays(lunar.month,lunar.day,lunar.isLeap):null;
   let hhtml="";if(sh)hhtml+=`<div class="holiday-line" style="color:var(--holiday-solar)">★ ${sh}</div>`;if(lh)hhtml+=`<div class="holiday-line" style="color:var(--holiday-lunar)">★ ${lh}</div>`;
   $("holidayArea").innerHTML=hhtml;
@@ -567,8 +545,8 @@ function renderConverter(){
     $("converterSolar").style.display="";$("converterLunar").style.display="none";
     $("tabSolar").classList.add("active");$("tabLunar").classList.remove("active");
     $("solarInput").value=state.selYear+"-"+pad(state.selMonth)+"-"+pad(state.selDay);
-    const lunar=solarToLunar(state.selYear,state.selMonth,state.selDay),hijri=solarToHijri(state.selYear,state.selMonth,state.selDay);
-    if(lunar)$("solarResult").innerHTML=`<div class="result-label">Lunar Result</div><div class="result-lunar">${lunar.isLeap?"闰":""}${LUNAR_MONTH_NAMES[lunar.month-1]} ${LUNAR_DAY_NAMES[lunar.day-1]}</div><div class="result-detail">Year ${lunar.year}, Month ${lunar.month}${lunar.isLeap?" (Leap)":""}, Day ${lunar.day}</div>${hijri?`<div class="result-hijri">Hijri: ${hijri.day}/${hijri.month}/${hijri.year}</div>`:""}`;
+    const lunar=solarToLunar(state.selYear,state.selMonth,state.selDay);
+    if(lunar)$("solarResult").innerHTML=`<div class="result-label">Lunar Result</div><div class="result-lunar">${lunar.isLeap?"闰":""}${LUNAR_MONTH_NAMES[lunar.month-1]} ${LUNAR_DAY_NAMES[lunar.day-1]}</div><div class="result-detail">Year ${lunar.year}, Month ${lunar.month}${lunar.isLeap?" (Leap)":""}, Day ${lunar.day}</div>`;
   }else{
     $("converterSolar").style.display="none";$("converterLunar").style.display="";
     $("tabSolar").classList.remove("active");$("tabLunar").classList.add("active");
@@ -584,7 +562,6 @@ $("nextMonth").onclick=()=>{if(state.viewMonth===12){state.viewYear++;state.view
 $("todayBtn").onclick=()=>{const t=new Date();state.viewYear=t.getFullYear();state.viewMonth=t.getMonth()+1;state.selYear=t.getFullYear();state.selMonth=t.getMonth()+1;state.selDay=t.getDate();render()};
 $("daysGrid").addEventListener("click",e=>{const cell=e.target.closest(".day-cell");if(!cell)return;state.selYear=+cell.dataset.y;state.selMonth=+cell.dataset.m;state.selDay=+cell.dataset.d;if(cell.dataset.cur==="false"){state.viewYear=+cell.dataset.y;state.viewMonth=+cell.dataset.m}render()});
 document.querySelectorAll("[data-view]").forEach(btn=>{btn.onclick=()=>{state.viewMode=btn.dataset.view;document.querySelectorAll("[data-view]").forEach(b=>b.classList.remove("active"));btn.classList.add("active");render()}});
-document.querySelectorAll("[data-system]").forEach(btn=>{btn.onclick=()=>{state.calSystem=btn.dataset.system;document.querySelectorAll("[data-system]").forEach(b=>b.classList.remove("active"));btn.classList.add("active");render()}});
 $("tabSolar").onclick=()=>{state.inputMode="solar";renderConverter()};
 $("tabLunar").onclick=()=>{state.inputMode="lunar";renderConverter()};
 $("solarInput").addEventListener("change",e=>{const p=e.target.value.split("-").map(Number);if(p[0]&&p[1]&&p[2]){state.selYear=p[0];state.selMonth=p[1];state.selDay=p[2];state.viewYear=p[0];state.viewMonth=p[1];render()}});
