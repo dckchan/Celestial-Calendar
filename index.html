@@ -433,8 +433,8 @@ function getLeapMonthDays(y){return getLeapMonth(y)?((LUNAR_DATA[y-1900]&0x10000
 function getLunarMonthDays(y,m){return(LUNAR_DATA[y-1900]&(0x10000>>m))?30:29}
 function solarToLunar(sy,sm,sd){
   if(sy<1900||sy>2100)return null;
-  const base=new Date(1900,0,31),target=new Date(sy,sm-1,sd);
-  let off=Math.floor((target-base)/86400000);if(off<0)return null;
+  let off=Math.floor((Date.UTC(sy,sm-1,sd)-Date.UTC(1900,0,31))/86400000);
+  if(off<0)return null;
   let ly=1900,yd;for(;ly<2101&&off>0;ly++){yd=getLunarYearDays(ly);off-=yd}
   if(off<0){off+=yd;ly--}
   const lm0=getLeapMonth(ly);let isLeap=false,lm=1,md;
@@ -449,13 +449,13 @@ function lunarToSolar(ly,lm,ld,isLeap=false){
   const lm0=getLeapMonth(ly);let leap=false;
   for(let m=1;m<lm;m++){if(!leap&&lm0>0&&m===lm0){leap=true;off+=getLeapMonthDays(ly);--m;continue}off+=getLunarMonthDays(ly,m);if(leap)leap=false}
   if(isLeap&&lm0===lm)off+=getLunarMonthDays(ly,lm);off+=ld-1;
-  const base=new Date(1900,0,31),r=new Date(base.getTime()+off*86400000);
-  return{year:r.getFullYear(),month:r.getMonth()+1,day:r.getDate()};
+  const ms=Date.UTC(1900,0,31)+off*86400000,r=new Date(ms);
+  return{year:r.getUTCFullYear(),month:r.getUTCMonth()+1,day:r.getUTCDate()};
 }
 function getStemBranch(y){const si=(y-4)%10,bi=(y-4)%12;return HEAVENLY_STEMS[si<0?si+10:si]+EARTHLY_BRANCHES[bi<0?bi+12:bi]}
 function getChineseZodiac(y){const i=(y-4)%12;const idx=i<0?i+12:i;return{name:CHINESE_ZODIAC[idx],emoji:ZODIAC_EMOJI[idx]}}
 function getWesternZodiac(m,d){for(const z of WESTERN_ZODIAC){if((m>z.start[0]||(m===z.start[0]&&d>=z.start[1]))&&(m<z.end[0]||(m===z.end[0]&&d<=z.end[1])))return z}return WESTERN_ZODIAC[0]}
-function getMoonPhase(y,m,d){const dt=new Date(y,m-1,d),kn=new Date(2000,0,6,18,14),diff=(dt-kn)/86400000,cyc=29.53058770576;return(((diff%cyc)+cyc)%cyc)/cyc}
+function getMoonPhase(y,m,d){const dt=Date.UTC(y,m-1,d),kn=Date.UTC(2000,0,6,18,14),diff=(dt-kn)/86400000,cyc=29.53058770576;return(((diff%cyc)+cyc)%cyc)/cyc}
 function getMoonPhaseName(p){
   if(p<0.0625)return{name:"New Moon",icon:"🌑"};if(p<0.1875)return{name:"Waxing Crescent",icon:"🌒"};
   if(p<0.3125)return{name:"First Quarter",icon:"🌓"};if(p<0.4375)return{name:"Waxing Gibbous",icon:"🌔"};
@@ -551,8 +551,9 @@ function renderSidePanel(){
   let zbhtml="";if(cz)zbhtml+=`<div class="zodiac-badge"><span style="font-size:18px">${cz.emoji}</span><span>${cz.name}</span>${sb?`<span style="font-family:'Noto Serif SC',serif;color:var(--text-secondary)">${sb}</span>`:""}</div>`;
   zbhtml+=`<div class="zodiac-badge"><span style="font-size:18px">${wz.symbol}</span><span>${wz.name}</span></div>`;
   $("zodiacBadges").innerHTML=zbhtml;
-  const doy=Math.ceil((new Date(sel.year,sel.month-1,sel.day)-new Date(sel.year,0,0))/86400000);
-  const wn=Math.ceil(((new Date(sel.year,sel.month-1,sel.day)-new Date(sel.year,0,1))/86400000+new Date(sel.year,0,1).getDay()+1)/7);
+  const doy=Math.ceil((Date.UTC(sel.year,sel.month-1,sel.day)-Date.UTC(sel.year,0,0))/86400000);
+  const dow=new Date(Date.UTC(sel.year,0,1)).getUTCDay();
+  const wn=Math.ceil(((Date.UTC(sel.year,sel.month-1,sel.day)-Date.UTC(sel.year,0,1))/86400000+dow+1)/7);
   const jd=Math.floor(gregorianToJD(sel.year,sel.month,sel.day));
   const isLY=sel.year%4===0&&(sel.year%100!==0||sel.year%400===0);
   let dhtml=`<div class="info-row"><span class="info-label">Day of Year</span><span class="info-value">${doy}</span></div><div class="info-row"><span class="info-label">Week Number</span><span class="info-value">${wn}</span></div><div class="info-row"><span class="info-label">Julian Day</span><span class="info-value accent" style="font-family:'JetBrains Mono',monospace;font-size:13px">${jd}</span></div>`;
